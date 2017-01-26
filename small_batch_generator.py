@@ -48,7 +48,7 @@ with open(search_file_path, "w") as searchFile, open(purchase_file_path, "w") as
         user1 = userSet[userIndex1]
         user2 = userSet[userIndex2]
 
-        for x in range(100): # Max 100 search for each user (less if they purchase) 
+        for x in range(20): # Max 20 searches for each user (less if they purchase) 
 
             now = datetime.now().strftime('%d/%b/%Y:%H:%M:%S')
             #epoch = time.time() * 1000
