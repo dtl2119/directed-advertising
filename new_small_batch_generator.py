@@ -63,7 +63,9 @@ with open(batch_file_path, "w") as batchFile:
             batchFile.write("%s, %s, %s, %s, %s\n" % (now, user1, user1ProductId, 1, user1Action))
             batchFile.write("%s, %s, %s, %s, %s\n" % (now, user2, user2ProductId, 2, user2Action))
             logLines -= 2
-
+            
+            if user1Action == "buy" or user2Action == "buy":
+                break
             
             if logLines <= 0:
                 break
