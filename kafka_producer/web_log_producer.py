@@ -29,6 +29,8 @@ parser.add_argument("--num", "-n", dest='num_lines', help="Number of lines to ge
 args = parser.parse_args()
 logLines = args.num_lines
 
+# Format of messages to be sent: csv
+msg_fmt = "{},{},{},{}"
 
 class Producer(object):
 
@@ -37,20 +39,67 @@ class Producer(object):
         self.producer = KeyedProducer(self.client)
 
     def produce_msgs(self, source_symbol):
-        price_field = random.randint(800,1400)
-        msg_cnt = 0
-        while True:
-            time_field = datetime.now().strftime("%Y%m%d %H%M%S")
-            price_field += random.randint(-10, 10)/10.0
-            volume_field = random.randint(1, 1000)
-            str_fmt = "{};{};{};{}"
-            message_info = str_fmt.format(source_symbol,
-                                          time_field,
-                                          price_field,
-                                          volume_field)
-            print message_info
-            self.producer.send_messages('price_data_part4', source_symbol, message_info)
-            msg_cnt += 1
+#        price_field = random.randint(800,1400)
+#        msg_cnt = 0
+#        while True:
+#            time_field = datetime.now().strftime("%Y%m%d %H%M%S")
+#            price_field += random.randint(-10, 10)/10.0
+#            volume_field = random.randint(1, 1000)
+#            str_fmt = "{};{};{};{}"
+#            message_info = str_fmt.format(source_symbol,
+#                                          time_field,
+#                                          price_field,
+#                                          volume_field)
+#            print message_info
+#            self.producer.send_messages('price_data_part4', source_symbol, message_info)
+#            msg_cnt += 1
+
+        flag = True
+        while (flag):
+
+            # Pick 2 random users (index)
+            userIndex1 = randint(0, len(userSet)-1)
+            userIndex2 = userIndex1 + 1
+            # Avoid index out of bounds
+            if userIndex2 > len(userSet)-1:
+                userIndex2 -= 2
+
+            user1 = userSet[userIndex1]
+            user2 = userSet[userIndex2]
+
+            for x in range(20): # Max 20 searches for each user (less if they purchase) 
+
+                now = datetime.now().strftime('%d/%b/%Y %H:%M:%S')
+                #epoch = time.time() * 1000
+                #epoch = time.time()
+
+                user1ProductId = random.choice(tvs)
+                user2ProductId = random.choice(cables)
+                    
+                user1SearchMsg = msg_fmt.format(now,user1,user1ProductId,1)
+                user2SearchMsg= msg_fmt.format(now,user2,user2ProductId,2)
+                logLines -= 2
+
+                # WRITE SEARCH
+                #searchFile.write("%s, %s, %s, %s \n" % (now, user1, user1ProductId, 1))
+                #searchFile.write("%s, %s, %s, %s \n" % (now, user2, user2ProductId, 2))
+                #logLines -= 2
+
+                # WRITE PURCHASE
+                if randint(1,20) == 1: # 5% Chance of buying
+                    purchaseFile.write("%s, %s, %s, %s\n" % (now, user1, user1ProductId, 1))
+                    break
+
+                if randint(1,20) == 1: # 5% Chance of buying
+                    purchaseFile.write("%s, %s, %s, %s\n" % (now, user2, user2ProductId, 2))
+                    break
+                
+                if logLines <= 0:
+                    break
+
+                
+            flag = False if logLines <= 0 else True
+
 
 if __name__ == "__main__":
     args = sys.argv
@@ -61,10 +110,7 @@ if __name__ == "__main__":
 
 
 
-### MY SCRIPT
-
-
-
+### From my script
 
 # For each producer/process, change range
 # Ex: process1: userids = 1 to 1000
