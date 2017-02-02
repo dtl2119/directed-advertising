@@ -34,7 +34,7 @@ class Producer(object):
         self.producer = KeyedProducer(self.client)
 
     def produce_msgs(self, source_symbol):
-        while (flag):
+        while (True):
 
             # Pick 3 random users (index)
             random.shuffle(userSet)
@@ -56,7 +56,8 @@ class Producer(object):
                     product_id = random.choice(categories[tup[1]])
                     action = "buy" if random.randint(1,20) == 1 else "search" # 5% chance of buying
                     userMsg = msg_fmt.format(now, tup[0], product_id, tup[1], action)
-                    print userMsg # FIXME
+                    #print userMsg # FIXME
+                    time.sleep(0.25)
                     self.producer.send_messages('web_log_data_part1', source_symbol, userMsg)
                     if action == "buy":
                         break
