@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import argparse
 import random
 import sys
 import six #FIXME: needed?
@@ -9,7 +8,8 @@ from datetime import datetime
 from faker import Faker
 from kafka.client import SimpleClient
 from kafka.producer import KeyedProducer
-from random import randint
+#from random import randint
+#from random import shuffle
 
 # FIXME: Add to argparse, make output arguments
 search_file_path = "/Users/drewlimm/insight/directed-advertising/short_search_batch.txt"
@@ -23,14 +23,14 @@ computers = [int(str(44)+ str(comp)) for comp in range(0, (20+1)*4, 4)[1:]] # ca
 
 categories = {1:tvs, 2: cables, 3:cameras, 4:computers}
 
-parser = argparse.ArgumentParser(__file__, description="Generate user search and purchase history")
-parser.add_argument("--num", "-n", dest='num_lines', help="Number of lines to generate (0 for infinite)", type=int, default=1)
 
-args = parser.parse_args()
-logLines = args.num_lines
+# Total number of users
+numUsers = 5000 
+userSet = random.sample(range(1, numUsers+1), numUsers) # ensure userids are unique
+
 
 # Format of messages to be sent: csv
-msg_fmt = "{},{},{},{}"
+msg_fmt = "{},{},{},{},{}"
 
 class Producer(object):
 
@@ -38,7 +38,8 @@ class Producer(object):
         self.client = SimpleClient(addr)
         self.producer = KeyedProducer(self.client)
 
-    def produce_msgs(self, source_symbol):
+#    def produce_msgs(self, source_symbol): # FIXME
+def produce_msgs():
 #        price_field = random.randint(800,1400)
 #        msg_cnt = 0
 #        while True:
@@ -57,108 +58,63 @@ class Producer(object):
         flag = True
         while (flag):
 
-            # Pick 2 random users (index)
-            userIndex1 = randint(0, len(userSet)-1)
-            userIndex2 = userIndex1 + 1
-            # Avoid index out of bounds
-            if userIndex2 > len(userSet)-1:
-                userIndex2 -= 2
-
-            user1 = userSet[userIndex1]
-            user2 = userSet[userIndex2]
+            # Pick 3 random users (index)
+            random.shuffle(userSet)
+            # user_id1, user_id2, user_id3 = userSet[:3] # FIXME
+            currUsers = userSet[:3]
+            
+            msgs = []
 
             for x in range(20): # Max 20 searches for each user (less if they purchase) 
-
-                now = datetime.now().strftime('%d/%b/%Y %H:%M:%S')
-                #epoch = time.time() * 1000
-                #epoch = time.time()
-
-                user1ProductId = random.choice(tvs)
-                user2ProductId = random.choice(cables)
-                    
-                user1SearchMsg = msg_fmt.format(now,user1,user1ProductId,1)
-                user2SearchMsg= msg_fmt.format(now,user2,user2ProductId,2)
-                logLines -= 2
-
-                # WRITE SEARCH
-                #searchFile.write("%s, %s, %s, %s \n" % (now, user1, user1ProductId, 1))
-                #searchFile.write("%s, %s, %s, %s \n" % (now, user2, user2ProductId, 2))
-                #logLines -= 2
-
-                # WRITE PURCHASE
-                if randint(1,20) == 1: # 5% Chance of buying
-                    purchaseFile.write("%s, %s, %s, %s\n" % (now, user1, user1ProductId, 1))
-                    break
-
-                if randint(1,20) == 1: # 5% Chance of buying
-                    purchaseFile.write("%s, %s, %s, %s\n" % (now, user2, user2ProductId, 2))
-                    break
                 
-                if logLines <= 0:
-                    break
 
+                # For each user: pick a random category, product in that category, and 
+                # an action ("search" or "buy")
+                for user_id in currUsers:
+                    now = datetime.now().strftime('%d/%b/%Y %H:%M:%S') # For epoch --> time.time()
+                    cat_id = random.choice(categories.keys())
+                    product_id = random.choice(categories[cat_id])
+                    action = "buy" if random.randint(1,20) == 1 else "search" # 5% chance of buying
+                    userMsg = msg_fmt.format(now, user_id, product_id, cat_id, action)
+                    msgs.append(userMsg)
+                    #logLines -= 1 # FIXME
+                    if action == "buy":
+                        break
+            
+                #if logLines <= 0: # FIXME
+                #    break
+            
+            for m in msgs:
+                print m
+            time.sleep(1)
                 
-            flag = False if logLines <= 0 else True
+            #flag = False if logLines <= 0 else True # FIXME
 
 
 if __name__ == "__main__":
-    args = sys.argv
-    ip_addr = str(args[1])
-    partition_key = str(args[2])
-    prod = Producer(ip_addr)
-    prod.produce_msgs(partition_key) 
+#    args = sys.argv
+#    ip_addr = str(args[1])
+#    partition_key = str(args[2])
+#    prod = Producer(ip_addr)
+#    prod.produce_msgs(partition_key) 
+
+    produce_msgs()
 
 
 
-### From my script
-
-# For each producer/process, change range
-# Ex: process1: userids = 1 to 1000
-#     process2: userids = 1001 to 2000
-#     process3: userids = 2001 to 3000
-num_user = 1000 # Number of unique users
-userSet = random.sample(range(1, num_user+1), num_user)
-
-
-with open(search_file_path, "w") as searchFile, open(purchase_file_path, "w") as purchaseFile:
-    flag = True
-    while (flag):
-
-        # Pick 2 random users (index)
-        userIndex1 = randint(0, len(userSet)-1)
-        userIndex2 = userIndex1 + 1
-        # Avoid index out of bounds
-        if userIndex2 > len(userSet)-1:
-            userIndex2 -= 2
-
-        user1 = userSet[userIndex1]
-        user2 = userSet[userIndex2]
-
-        for x in range(20): # Max 20 searches for each user (less if they purchase) 
-
-            now = datetime.now().strftime('%d/%b/%Y:%H:%M:%S')
-            #epoch = time.time() * 1000
-            #epoch = time.time()
-
-            user1ProductId = random.choice(tvs)
-            user2ProductId = random.choice(cables)
-                
-            # WRITE SEARCH
-            searchFile.write("%s, %s, %s, %s \n" % (now, user1, user1ProductId, 1))
-            searchFile.write("%s, %s, %s, %s \n" % (now, user2, user2ProductId, 2))
-            logLines -= 2
-
-            # WRITE PURCHASE
-            if randint(1,20) == 1: # 5% Chance of buying
-                purchaseFile.write("%s, %s, %s, %s \n" % (now, user1, user1ProductId, 1))
-                break
-
-            if randint(1,20) == 1: # 5% Chance of buying
-                purchaseFile.write("%s, %s, %s, %s \n" % (now, user2, user2ProductId, 2))
-                break
-            
-            if logLines <= 0:
-                break
-
-            
-        flag = False if logLines <= 0 else True
+### Insight Example:
+#    def produce_msgs(self, source_symbol):
+#        price_field = random.randint(800,1400)
+#        msg_cnt = 0
+#        while True:
+#            time_field = datetime.now().strftime("%Y%m%d %H%M%S")
+#            price_field += random.randint(-10, 10)/10.0
+#            volume_field = random.randint(1, 1000)
+#            str_fmt = "{};{};{};{}"
+#            message_info = str_fmt.format(source_symbol,
+#                                          time_field,
+#                                          price_field,
+#                                          volume_field)
+#            print message_info
+#            self.producer.send_messages('price_data_part4', source_symbol, message_info)
+#            msg_cnt += 1
