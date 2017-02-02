@@ -8,12 +8,7 @@ from datetime import datetime
 from faker import Faker
 from kafka.client import SimpleClient
 from kafka.producer import KeyedProducer
-#from random import randint
-#from random import shuffle
 
-# FIXME: Add to argparse, make output arguments
-search_file_path = "/Users/drewlimm/insight/directed-advertising/short_search_batch.txt"
-purchase_file_path = "/Users/drewlimm/insight/directed-advertising/short_purchase_batch.txt"
 
 # FIXME: append larger "category id" to beginning
 tvs = [int(str(11)+ str(tv)) for tv in range(0, (5+1)*10, 10)[1:]] # tv ids: 5 tvs, multiple of 10, append 1 to front of number
@@ -38,83 +33,40 @@ class Producer(object):
         self.client = SimpleClient(addr)
         self.producer = KeyedProducer(self.client)
 
-#    def produce_msgs(self, source_symbol): # FIXME
-def produce_msgs():
-#        price_field = random.randint(800,1400)
-#        msg_cnt = 0
-#        while True:
-#            time_field = datetime.now().strftime("%Y%m%d %H%M%S")
-#            price_field += random.randint(-10, 10)/10.0
-#            volume_field = random.randint(1, 1000)
-#            str_fmt = "{};{};{};{}"
-#            message_info = str_fmt.format(source_symbol,
-#                                          time_field,
-#                                          price_field,
-#                                          volume_field)
-#            print message_info
-#            self.producer.send_messages('price_data_part4', source_symbol, message_info)
-#            msg_cnt += 1
-
-        flag = True
+    def produce_msgs(self, source_symbol):
         while (flag):
 
             # Pick 3 random users (index)
             random.shuffle(userSet)
-            # user_id1, user_id2, user_id3 = userSet[:3] # FIXME
+            # user_id1, user_id2, user_id3 = userSet[:3]
             currUsers = userSet[:3]
-            
-            msgs = []
+           
+            # Tuple for users, ensure searching in same category
+            # (user, category_id)
+            userTuples = []
+            for user in currUsers:
+                cat_id = random.choice(categories.keys())
+                userTuples.append((user, cat_id))
 
             for x in range(20): # Max 20 searches for each user (less if they purchase) 
-                
+                now = datetime.now().strftime('%d/%b/%Y %H:%M:%S') # For epoch --> time.time()
 
-                # For each user: pick a random category, product in that category, and 
-                # an action ("search" or "buy")
-                for user_id in currUsers:
-                    now = datetime.now().strftime('%d/%b/%Y %H:%M:%S') # For epoch --> time.time()
-                    cat_id = random.choice(categories.keys())
-                    product_id = random.choice(categories[cat_id])
+                # For each (user, category), pick a product and action (either 'search' or 'buy')
+                for tup in userTuples:
+                    product_id = random.choice(categories[tup[1]])
                     action = "buy" if random.randint(1,20) == 1 else "search" # 5% chance of buying
-                    userMsg = msg_fmt.format(now, user_id, product_id, cat_id, action)
-                    msgs.append(userMsg)
-                    #logLines -= 1 # FIXME
+                    userMsg = msg_fmt.format(now, tup[0], product_id, tup[1], action)
+                    print userMsg # FIXME
+                    self.producer.send_messages('web_log_data_part1', source_symbol, userMsg)
                     if action == "buy":
                         break
-            
-                #if logLines <= 0: # FIXME
-                #    break
-            
-            for m in msgs:
-                print m
-            time.sleep(1)
-                
-            #flag = False if logLines <= 0 else True # FIXME
 
 
 if __name__ == "__main__":
-#    args = sys.argv
-#    ip_addr = str(args[1])
-#    partition_key = str(args[2])
-#    prod = Producer(ip_addr)
-#    prod.produce_msgs(partition_key) 
-
-    produce_msgs()
+    args = sys.argv
+    ip_addr = str(args[1])
+    partition_key = str(args[2])
+    prod = Producer(ip_addr)
+    prod.produce_msgs(partition_key) 
 
 
-
-### Insight Example:
-#    def produce_msgs(self, source_symbol):
-#        price_field = random.randint(800,1400)
-#        msg_cnt = 0
-#        while True:
-#            time_field = datetime.now().strftime("%Y%m%d %H%M%S")
-#            price_field += random.randint(-10, 10)/10.0
-#            volume_field = random.randint(1, 1000)
-#            str_fmt = "{};{};{};{}"
-#            message_info = str_fmt.format(source_symbol,
-#                                          time_field,
-#                                          price_field,
-#                                          volume_field)
-#            print message_info
-#            self.producer.send_messages('price_data_part4', source_symbol, message_info)
-#            msg_cnt += 1
