@@ -63,6 +63,11 @@ class Producer(object):
                         break
 
 
+                # Get 3 new users if a purchase made
+                if action == "buy":
+                    break
+
+
 if __name__ == "__main__":
     args = sys.argv
     ip_addr = str(args[1])
