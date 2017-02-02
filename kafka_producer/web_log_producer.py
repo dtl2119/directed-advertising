@@ -58,7 +58,7 @@ class Producer(object):
                     userMsg = msg_fmt.format(now, tup[0], product_id, tup[1], action)
                     #print userMsg # FIXME
                     time.sleep(0.25)
-                    self.producer.send_messages('web_log_data_part1', source_symbol, userMsg)
+                    self.producer.send_messages('web_activity1', source_symbol, userMsg) # Where 'web_activity1' is the topic
                     if action == "buy":
                         break
 
