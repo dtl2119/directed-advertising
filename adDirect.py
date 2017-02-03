@@ -1,6 +1,12 @@
 #!/usr/bin/python
 
 from pyspark import SparkContext, SparkConf
+from cassandra.cluster import Cluster
+
+# Connect to Cassandra cluster and create session
+cluster = Cluster()
+cluster = Cluster(['172.31.0.133']) # Only need 1 private ip, it will auto discover remaining nodes in cluster
+session = cluster.connect('advertise') # Connect to cluster, create session w/ keyspace = 'advertise'
 
 # To submit this python application on Spark cluster for execution:
 # $SPARK_HOME/bin/spark-submit <path_to_application> --master spark://<master_public_dns:7077
@@ -32,4 +38,16 @@ resultRdd = groupedRdd.filter(lambda x: x[0] not in buyKeys).map(lambda x: [x[0]
 
 # Dictionary result
 result = dict(resultRdd.collect())
+
+
+# Insert results into Cassandra
+for k, v in result.iteritems():
+    session.execute(
+    """
+    INSERT INTO usersearches (userid, categoryid, searches)
+    VALUES (%s, %s, %s)
+    """,
+    (k[0], k[1], v))
+)
+
 
