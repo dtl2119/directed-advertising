@@ -2,7 +2,8 @@
 
 
 import time
-from kafka.client import KafkaClient
+#from kafka.client import KafkaClient
+from kafka import KafkaClient
 from kafka.consumer import SimpleConsumer
 import os
 
@@ -64,7 +65,7 @@ class Consumer(object):
                 for message in messages:
                     self.temp_file.write(message.message.value + "\n")
 
-                # file size > 20MB
+                # file size > 120MB
                 if self.temp_file.tell() > 120000000:
                     self.flush_to_hdfs(output_dir)
 
