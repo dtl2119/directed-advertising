@@ -63,7 +63,8 @@ class Consumer(object):
                     self.temp_file.write(message.message.value + "\n")
 
                 # file size > 120MB
-                if self.temp_file.tell() > 120000000:
+                #if self.temp_file.tell() > 120000000:
+                if self.temp_file.tell() > 60000:
                     self.flush_to_hdfs(output_dir)
 
                 self.consumer.commit()
@@ -96,8 +97,8 @@ class Consumer(object):
         self.block_cnt += 1
 
         # place blocked messages into history and cached folders on hdfs
-        os.system("sudo -u hdfs hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
-        os.system("sudo -u hdfs hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
+        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
+        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
 
         os.remove(self.temp_file_path)
 
