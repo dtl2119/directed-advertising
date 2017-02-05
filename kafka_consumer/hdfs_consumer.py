@@ -97,8 +97,10 @@ class Consumer(object):
         self.block_cnt += 1
 
         # place blocked messages into history and cached folders on hdfs
-        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
-        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
+#        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath)) # FIXME
+#        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath)) # FIXME
+        os.system("hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
+        os.system("hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
 
         os.remove(self.temp_file_path)
 
