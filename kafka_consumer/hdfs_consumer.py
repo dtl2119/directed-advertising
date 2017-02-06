@@ -6,6 +6,7 @@ import time
 from kafka import KafkaClient
 from kafka.consumer import SimpleConsumer
 import os
+import subprocess
 
 
 class Consumer(object):
@@ -64,7 +65,7 @@ class Consumer(object):
 
                 # file size > 120MB
                 #if self.temp_file.tell() > 120000000:
-                if self.temp_file.tell() > 60000:
+                if self.temp_file.tell() > 60000: # FIXME
                     self.flush_to_hdfs(output_dir)
 
                 self.consumer.commit()
@@ -99,8 +100,15 @@ class Consumer(object):
         # place blocked messages into history and cached folders on hdfs
 #        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath)) # FIXME
 #        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath)) # FIXME
-        os.system("hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
-        os.system("hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
+        #os.system("hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
+        #os.system("hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
+
+        base_cmd = ['hdfs', 'dfs', '-put', self.temp_file_path]
+        hadoop_cmd = base_cmd.append(hadoop_fullpath)
+        cached_cmd = base_cmd.append(cached_fullpath)
+
+        subprocess.call(hadoop_cmd) # Flush local file to "/user/web_logs"
+        subprocess.call(cached_cmd) # Flush local fle to "/user/cached"
 
         os.remove(self.temp_file_path)
 
