@@ -100,15 +100,8 @@ class Consumer(object):
         # place blocked messages into history and cached folders on hdfs
 #        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath)) # FIXME
 #        os.system("sudo -u ubuntu hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath)) # FIXME
-        #os.system("hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
-        #os.system("hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
-
-        base_cmd = ['hdfs', 'dfs', '-put', self.temp_file_path]
-        hadoop_cmd = base_cmd.append(hadoop_fullpath)
-        cached_cmd = base_cmd.append(cached_fullpath)
-
-        subprocess.call(hadoop_cmd) # Flush local file to "/user/web_logs"
-        subprocess.call(cached_cmd) # Flush local fle to "/user/cached"
+        os.system("hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
+        os.system("hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
 
         os.remove(self.temp_file_path)
 

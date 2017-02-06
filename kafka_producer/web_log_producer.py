@@ -33,7 +33,7 @@ class Producer(object):
         self.client = SimpleClient(addr)
         self.producer = KeyedProducer(self.client)
 
-    def produce_msgs(self, source_symbol):
+    def produce_msgs(self):
         while (True):
 
             # Pick 3 random users (index)
@@ -57,8 +57,8 @@ class Producer(object):
                     action = "buy" if random.randint(1,20) == 1 else "search" # 5% chance of buying
                     userMsg = msg_fmt.format(now, tup[0], product_id, tup[1], action)
                     #print userMsg # FIXME
-                    time.sleep(0.25)
-                    self.producer.send_messages('web_activity1', source_symbol, userMsg) # Where 'web_activity1' is the topic
+                    time.sleep(0.5)
+                    self.producer.send_messages('web_activity1', str(tup[0]), userMsg) # Where 'web_activity1' is the topic
                     if action == "buy":
                         break
 
@@ -71,8 +71,8 @@ class Producer(object):
 if __name__ == "__main__":
     args = sys.argv
     ip_addr = str(args[1])
-    partition_key = str(args[2])
+    #partition_key = str(args[2])
     prod = Producer(ip_addr)
-    prod.produce_msgs(partition_key) 
+    prod.produce_msgs() 
 
 
