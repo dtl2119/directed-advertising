@@ -47,4 +47,9 @@ df_grouped_searches.show(3, False)
 
 #session.sql("INSERT INTO advertise.usersearches (userid, categoryid, searches) VALUES ('2', '2', ['2', '2'])")
 #df_grouped_searches.write.format("org.apache.spark.sql.cassandra").mode('append').options(table='usersearches', keyspace='advertise').save()
-#ed_searches.select('userid', 'categoryid', 'searches').write.save
+#select('userid', 'categoryid', 'searches').saveToCassandra('advertise', 'usersearches')
+df_grouped_searches.write\
+        .format("org.apache.spark.sql.cassandra")\
+        .mode('append')\
+        .options(table="usersearches", keyspace="advertise")\
+        .save()
