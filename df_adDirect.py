@@ -74,16 +74,10 @@ if __name__ == '__main__':
     # Use SparkSession builder to create a new session
     spark = SparkSession.builder.appName("adirect").getOrCreate()
 
-    previous_df = grabFromCassandra(spark) # Data to be updated
-    print "hello"
-    print type(previous_df)
-    print "world"
-    previous_df.show(5, False)
-    import sys
-    sys.exit(3)
 
     df = grabFromHDFS('small_batch_file.csv')
 
+    previous_df = grabFromCassandra(spark) # Data to be updated
     resultDF = filterDF(spark, df)
 
     # FIXME: For testing
