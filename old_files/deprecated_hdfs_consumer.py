@@ -49,10 +49,7 @@ class Consumer(object):
         timestamp = time.strftime('%Y%m%d%H%M%S')
         
         # open file for writing
-        self.temp_file_path = "%s/kafka_%s_%s_%s.dat" % (output_dir,
-                                                         self.topic,
-                                                         self.group,
-                                                         timestamp)
+        self.temp_file_path = "%s/kafka_%s_%s_%s.dat" % (output_dir,self.topic,self.group,timestamp)
         self.temp_file = open(self.temp_file_path,"w")
 
         while True:
@@ -92,27 +89,22 @@ class Consumer(object):
         """
         self.temp_file.close()
         timestamp = time.strftime('%Y%m%d%H%M%S')
-        hadoop_fullpath = "%s/%s_%s_%s.dat" % (self.hadoop_path, self.group,
-                                               self.topic, timestamp)
-        cached_fullpath = "%s/%s_%s_%s.dat" % (self.cached_path, self.group,
-                                               self.topic, timestamp)
-        print "Block #{}: Flushing 120MB file to HDFS => {}".format(str(self.block_cnt),
-                                                                  hadoop_fullpath)
+        hadoop_fullpath = "%s/%s_%s_%s.dat" % (self.hadoop_path, self.group,self.topic, timestamp)
+        cached_fullpath = "%s/%s_%s_%s.dat" % (self.cached_path, self.group,self.topic, timestamp)
+
+        print "Block #{}: Flushing 120MB file to HDFS => {}".format(str(self.block_cnt),hadoop_fullpath)
         self.block_cnt += 1
 
         # place blocked messages into history and cached folders on hdfs
-        os.system("sudo -u hdfs hdfs dfs -put %s %s" % (self.temp_file_path,
-                                                        hadoop_fullpath))
-        os.system("sudo -u hdfs hdfs dfs -put %s %s" % (self.temp_file_path,
-                                                        cached_fullpath))
+        os.system("sudo -u hdfs hdfs dfs -put %s %s" % (self.temp_file_path,hadoop_fullpath))
+        os.system("sudo -u hdfs hdfs dfs -put %s %s" % (self.temp_file_path,cached_fullpath))
+
         os.remove(self.temp_file_path)
 
         timestamp = time.strftime('%Y%m%d%H%M%S')
 
-        self.temp_file_path = "%s/kafka_%s_%s_%s.dat" % (output_dir,
-                                                         self.topic,
-                                                         self.group,
-                                                         timestamp)
+        self.temp_file_path = "%s/kafka_%s_%s_%s.dat" % (output_dir,self.topic,self.group,timestamp)
+
         self.temp_file = open(self.temp_file_path, "w")
 
 
