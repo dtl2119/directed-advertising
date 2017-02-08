@@ -8,22 +8,25 @@ from pyspark.sql import functions as F
 # TO RUN AS SPARK-SUBMIT JOB:
 # spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="ec2-34-199-42-65.compute-1.amazonaws.com" df_adDirect.py
 
-#df = session.read.csv("hdfs://ec2-34-198-20-105.compute-1.amazonaws.com:9000/user/web_logs/small_batch_file.csv")
+#df = spark.read.csv("hdfs://ec2-34-198-20-105.compute-1.amazonaws.com:9000/user/web_logs/small_batch_file.csv")
 def grabFromHDFS(filename):
     hdfs_master = hdfs['master1'] # Piublic IP of NamdeNode
     hdfs_port = "9000"
-    #filename = "*.csv"
     full_hdfs_path = "hdfs://%s:%s/%s/%s" % (hdfs_master, hdfs_port, hdfs['base_dir'], filename)
-    #return session.read.csv("hdfs://ec2-34-198-20-105.compute-1.amazonaws.com:9000/user/web_logs/small_batch_file.csv")
-    return session.read.csv(full_hdfs_path)
+    #return spark.read.csv("hdfs://ec2-34-198-20-105.compute-1.amazonaws.com:9000/user/web_logs/small_batch_file.csv")
+    return spark.read.csv(full_hdfs_path)
 
 
-def filterDF(sparksession, df):
+def filterDF(spark, df):
     """
-    This function takes the SparkSession and raw dataframe from HDFS and:
-    - Names the columns, for query readability
-    - Splits raw df of logs into 2: searches and buys
+    This funtion takes two parameters: 
+    1) The spark session
+    2) Raw dataframe (from HDFS)
+
+    Then it names the columns for query readability, and splits the df into
+    two separate dfs: searches and buys
     """
+
     # Rename Columns of DF
     old_cols = df.schema.names
     new_cols = ["time", "userid", "productid", "categoryid", "action"]
@@ -33,16 +36,27 @@ def filterDF(sparksession, df):
     df.createOrReplaceTempView("df_table")
 
     # Get DF of only searches (filter out users who made a purchase)
-    df_searches = session.sql("SELECT userid, categoryid, productid FROM df_table where action = 'search'")
+    df_searches = spark.sql("SELECT userid, categoryid, productid FROM df_table where action = 'search'")
 
     # Get DF of only buys
-    #df_buys = session.sql("SELECT userid, categoryid, productid FROM df_table where action = 'buy'")
+    #df_buys = spark.sql("SELECT userid, categoryid, productid FROM df_table where action = 'buy'")
 
     # Get in format of: [userid, categoryid]: [list, of, searches] 
     df_grouped_searches = df_searches.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
 
     return df_grouped_searches
 
+def grabFromCassandra(spark):
+    """
+    Takes a SparkSession and connects to local Cassandra DB (de-ny-drew2)
+    Returns DF containing results from the previous spark-submit run
+    """
+    #df = sqlContext.read\
+    return spark.read\
+            .format("org.apache.spark.sql.cassandra")\
+            .options(table="usersearches", keyspace="advertise")\
+            .load()
+    
 
 def writeToCassandra(df):
     """
@@ -58,11 +72,19 @@ def writeToCassandra(df):
 if __name__ == '__main__':
 
     # Use SparkSession builder to create a new session
-    session = SparkSession.builder.appName("adirect").getOrCreate()
+    spark = SparkSession.builder.appName("adirect").getOrCreate()
+
+    previous_df = grabFromCassandra(spark) # Data to be updated
+    print "hello"
+    print type(previous_df)
+    print "world"
+    previous_df.show(5, False)
+    import sys
+    sys.exit(3)
 
     df = grabFromHDFS('small_batch_file.csv')
 
-    resultDF = filterDF(session, df)
+    resultDF = filterDF(spark, df)
 
     # FIXME: For testing
     resultDF.show(3, False)
@@ -70,4 +92,4 @@ if __name__ == '__main__':
     writeToCassandra(resultDF)
 
     # Stop the underlying SparkContext
-    session.stop()
+    spark.stop()
