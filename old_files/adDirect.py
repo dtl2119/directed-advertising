@@ -40,14 +40,3 @@ resultRdd = groupedRdd.filter(lambda x: x[0] not in buyKeys).map(lambda x: [x[0]
 result = dict(resultRdd.collect())
 
 
-# Insert results into Cassandra
-for k, v in result.iteritems():
-    session.execute(
-    """
-    INSERT INTO usersearches (userid, categoryid, searches)
-    VALUES (%s, %s, %s)
-    """,
-    (k[0], k[1], v))
-)
-
-
