@@ -6,7 +6,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 # TO RUN AS SPARK-SUBMIT JOB:
-# spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="ec2-34-199-42-65.compute-1.amazonaws.com" df_adDirect.py
+# spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="ec2-34-199-42-65.compute-1.amazonaws.com" <pyspark_file>
 
 #df = spark.read.csv("hdfs://ec2-34-198-20-105.compute-1.amazonaws.com:9000/user/web_logs/small_batch_file.csv")
 def grabFromHDFS(filename):
@@ -17,41 +17,67 @@ def grabFromHDFS(filename):
     return spark.read.csv(full_hdfs_path)
 
 
-def filterDF(spark, df):
+def processNewDF(spark, new_df):
     """
-    This funtion takes two parameters: 
+    Function takes two parameters: 
     1) The spark session
-    2) Raw dataframe (from HDFS)
+    2) New raw dataframe (from HDFS)
 
-    Then it names the columns for query readability, and splits the df into
-    two separate dfs: searches and buys
+    It creates a df from previous results, stored in a Cassandra cluster.
+    Then it names the columns of the new/incoming df for query readability,
+    and splits the df into 2 separate dfs: searches and buys.  
+    The new buys are used to filter out user, category pairs from the Cassandra 
+    data df (don't advertise to users who made a purchase).  Once filtered, 
+    union the new searches, and return the resulting DF.
+
     """
-
-    # Rename Columns of DF
-    old_cols = df.schema.names
+    prev_df = grabFromCassandra(spark) # Data to be updated
+    
+    # Rename Columns of new DF
+    old_cols = new_df.schema.names
     new_cols = ["time", "userid", "productid", "categoryid", "action"]
-    df = reduce(lambda df, i: df.withColumnRenamed(old_cols[i], new_cols[i]), xrange(len(old_cols)), df)
+    new_df = reduce(lambda df, i: df.withColumnRenamed(old_cols[i], new_cols[i]), xrange(len(old_cols)), new_df)
+    new_df.createOrReplaceTempView("new_table")
+
 
     # Trim DataFrame to only relevant cols: user, category, product
-    df.createOrReplaceTempView("df_table")
-
     # Get DF of only searches (filter out users who made a purchase)
-    df_searches = spark.sql("SELECT userid, categoryid, productid FROM df_table where action = 'search'")
+    df_searches = spark.sql("SELECT userid, categoryid, productid FROM new_table where action = 'search'")
 
-    # Get DF of only buys
-    #df_buys = spark.sql("SELECT userid, categoryid, productid FROM df_table where action = 'buy'")
+    # Get DF of only buys from new DF to filter out of what was in Cassandra
+    df_buys = spark.sql("SELECT userid, categoryid, productid FROM new_table where action = 'buy'")
 
-    # Get in format of: [userid, categoryid]: [list, of, searches] 
-    df_grouped_searches = df_searches.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
+    # TEST
+    newRow = spark.createDataFrame([("964", "2", "345")], ['userid','categoryid', 'productid'])
+    df_buys = df_buys.union(newRow)
 
-    return df_grouped_searches
+    # Remove from previous if they purchased
+    #query = """
+    #    SELECT prev.userid, prev.categoryid, prev.searches
+    #    FROM prev_table prev
+    #    LEFT OUTER JOIN new_buys_table new
+    #    ON prev.userid = new.userid and
+    #    prev.categoryid = new.categoryid
+    #"""
+    #removed_df = spark.sql(query)
+    cond = [prev_df.userid == df_buys.userid, prev_df.categoryid == df_buys.categoryid]
+    prev_filtered_df = prev_df.join(df_buys, cond, 'left_outer').select(prev_df.userid, prev_df.categoryid, prev_df.searches)
+
+    # Get new DF in format of: [userid, categoryid]: [list, of, searches] 
+    new_searches_df = df_searches.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
+
+    result_df = prev_filtered_df.union(new_searches_df)
+
+    return result_df
+
 
 def grabFromCassandra(spark):
     """
-    Takes a SparkSession and connects to local Cassandra DB (de-ny-drew2)
-    Returns DF containing results from the previous spark-submit run
+    Take a SparkSession and connect to local Cassandra DB (de-ny-drew2)
+
+        Returns: DF containing results from the previous spark-submit run
     """
-    #df = sqlContext.read\
+
     return spark.read\
             .format("org.apache.spark.sql.cassandra")\
             .options(table="usersearches", keyspace="advertise")\
@@ -64,7 +90,7 @@ def writeToCassandra(df):
     """
     df.write\
             .format("org.apache.spark.sql.cassandra")\
-            .mode('append')\
+            .mode('overwrite')\
             .options(table="usersearches", keyspace="advertise")\
             .save()
 
@@ -74,16 +100,10 @@ if __name__ == '__main__':
     # Use SparkSession builder to create a new session
     spark = SparkSession.builder.appName("adirect").getOrCreate()
 
+    new_df = grabFromHDFS('small_batch_file.csv')
+    result_df = processNewDF(spark, new_df)
+    result_df.show(3, False) # FIXME: testing
 
-    df = grabFromHDFS('small_batch_file.csv')
+    writeToCassandra(result_df)
 
-    previous_df = grabFromCassandra(spark) # Data to be updated
-    resultDF = filterDF(spark, df)
-
-    # FIXME: For testing
-    resultDF.show(3, False)
-
-    writeToCassandra(resultDF)
-
-    # Stop the underlying SparkContext
-    spark.stop()
+    spark.stop() # Stop spark session
