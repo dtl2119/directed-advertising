@@ -42,37 +42,19 @@ def processNewDF(spark, new_df):
 
     # Trim DataFrame to only relevant cols: user, category, product
     # Get DF of only searches (filter out users who made a purchase)
-    df_searches = spark.sql("SELECT userid, categoryid, productid FROM new_table where action = 'search'")
+    searches_df = spark.sql("SELECT userid, categoryid, productid FROM new_table where action = 'search'")
 
     # Get DF of only buys from new DF to filter out of what was in Cassandra
     buys_df = spark.sql("SELECT userid, categoryid, productid FROM new_table where action = 'buy'")
 
     buys_df.createOrReplaceTempView("buys_table")
     prev_df.createOrReplaceTempView("prev_table")
+    
     # Remove from previous if they purchased
-#    query = """
-#        SELECT prev.userid, prev.categoryid, prev.searches
-#        FROM prev_table prev
-#        LEFT OUTER JOIN new_buys_table new
-#        ON prev.userid = new.userid and
-#        prev.categoryid = new.categoryid
-#    """
-    query = """
-        DELETE p.userid, p.categoryid, p.searches
-        FROM prev_table p
-        LEFT JOIN buys_table b
-        ON p.userid = b.userid
-        and p.categoryid = b.categoryid
-        WHERE p.userid = b.userid
-        AND  p.categoryid = b.categoryid
-    """
-    prev_filtered__df = spark.sql(query)
-    prev_filtered__df = spark.sql("DELETE prev FROM TABLE prev_table AS prev")
-    #cond = [prev_df.userid != buys_df.userid, prev_df.categoryid != buys_df.categoryid]
-    #prev_filtered_df = prev_df.join(buys_df, cond, 'left_outer').select(prev_df.userid, prev_df.categoryid, prev_df.searches)
+    prev_filtered_df = prev_df.join(buys_df, ['userid', 'categoryid'], 'left_anti')
 
-    # Get new DF in format of: [userid, categoryid]: [list, of, searches] 
-    new_searches_df = df_searches.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
+    # Get new DF of searches in format of: [userid, categoryid]: [list, of, searches] 
+    new_searches_df = searches_df.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
 
     result_df = prev_filtered_df.union(new_searches_df)
 
@@ -98,7 +80,7 @@ def writeToCassandra(df):
     """
     df.write\
             .format("org.apache.spark.sql.cassandra")\
-            .mode('overwrite')\
+            .mode('append')\
             .options(table="usersearches", keyspace="advertise")\
             .save()
 
@@ -108,11 +90,9 @@ if __name__ == '__main__':
     # Use SparkSession builder to create a new session
     spark = SparkSession.builder.appName("adirect").getOrCreate()
 
-    new_df = grabFromHDFS('test_spark.csv')
-    #new_df = grabFromHDFS('small_batch_file.csv')
+    #new_df = grabFromHDFS('test_spark.csv')
+    new_df = grabFromHDFS('small_batch_file.csv')
     result_df = processNewDF(spark, new_df)
-    #print result_df.collect() # FIXME
-    result_df.show(3, False) # FIXME: testing
 
     writeToCassandra(result_df)
 
