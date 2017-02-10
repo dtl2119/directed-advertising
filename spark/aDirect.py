@@ -6,14 +6,13 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 # TO RUN AS SPARK-SUBMIT JOB:
-# spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="ec2-34-199-42-65.compute-1.amazonaws.com" <pyspark_file>
+# spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="Cassandra DB IPs" <pyspark_file>
 
-#df = spark.read.csv("hdfs://ec2-34-198-20-105.compute-1.amazonaws.com:9000/user/web_logs/small_batch_file.csv")
 def grabFromHDFS(filename):
     hdfs_master = hdfs['master1'] # Piublic IP of NamdeNode
     hdfs_port = "9000"
     full_hdfs_path = "hdfs://%s:%s/%s/%s" % (hdfs_master, hdfs_port, hdfs['base_dir'], filename)
-    #return spark.read.csv("hdfs://ec2-34-198-20-105.compute-1.amazonaws.com:9000/user/web_logs/small_batch_file.csv")
+    #return spark.read.csv("hdfs://<namenode_public_DNS>:9000/user/web_logs/small_batch_file.csv")
     return spark.read.csv(full_hdfs_path)
 
 
@@ -68,10 +67,13 @@ def grabFromCassandra(spark):
         Returns: DF containing results from the previous spark-submit run
     """
 
-    return spark.read\
+    #return spark.read\
+    existing =  spark.read\
             .format("org.apache.spark.sql.cassandra")\
             .options(table="usersearches", keyspace="advertise")\
             .load()
+    
+    existing.printSchema()
     
 
 def writeToCassandra(df):
@@ -93,6 +95,8 @@ if __name__ == '__main__':
     #new_df = grabFromHDFS('test_spark.csv')
     new_df = grabFromHDFS('small_batch_file.csv')
     result_df = processNewDF(spark, new_df)
+    #print result_df.count()
+    #result_df.printSchema()
 
     writeToCassandra(result_df)
 
