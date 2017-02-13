@@ -8,17 +8,19 @@
 
 
 
-
 ###Clusters
+The data pipeline consists of 2 clusters: `de-ny-drew` and `de-ny-drew2`
+Using m4.large AWS EC2 instances, each cluster had a master and 3 workers, for a total of 8 nodes.
+
+
+
+###Data Pipeline
     - First Cluster `de-ny-drew`
         - Kafka (Producers and Consumers)
         - Hadoop/HDFS
     - Second Cluster `de-ny-drew2`
         - Spark Engine
         - Cassandra DB
-
-###Data Pipeline
-
 
 
 ##Spark 
