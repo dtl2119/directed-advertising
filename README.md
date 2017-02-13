@@ -1,10 +1,9 @@
 # directed-advertising
----
 
 ##### Table of Contents  
-[Clusters](#clusters)  
-[Data Pipeline](#data-pipeline)
-[Spark](#spark)
+- [Clusters](#clusters)  
+- [Data Pipeline](#data-pipeline)
+- [Spark](#spark)
 
 
 
