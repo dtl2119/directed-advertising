@@ -1,103 +1,99 @@
-#!/usr/bin/python
 
 from cluster_ips import hdfs
-from pyspark import SparkContext, SparkConf
+from cluster_ips import cassandra
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 # TO RUN AS SPARK-SUBMIT JOB:
 # spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="Cassandra DB IPs" <pyspark_file>
 
-def grabFromHDFS(filename):
-    hdfs_master = hdfs['master1'] # Piublic IP of NamdeNode
-    hdfs_port = "9000"
+def grabFromHDFS(filename = "*.csv"):
+    """
+    Grab csv file(s) from hdfs cluster on de-ny-drew
+    If no filename provided, grab all csv files from 
+    base directory in hdfs: /user/web_logs
+
+    Returns:
+        Data frame split by comma delimiter
+
+    """
+    hdfs_master = hdfs['master1'] # Public IP of NamdeNode
+    hdfs_port = hdfs['port'] # hdfs port 9000
     full_hdfs_path = "hdfs://%s:%s/%s/%s" % (hdfs_master, hdfs_port, hdfs['base_dir'], filename)
-    #return spark.read.csv("hdfs://<namenode_public_DNS>:9000/user/web_logs/small_batch_file.csv")
     return spark.read.csv(full_hdfs_path)
 
 
-def processNewDF(spark, new_df):
+def writeToCassandra(table, df):
     """
-    Function takes two parameters: 
-    1) The spark session
-    2) New raw dataframe (from HDFS)
-
-    It creates a df from previous results, stored in a Cassandra cluster.
-    Then it names the columns of the new/incoming df for query readability,
-    and splits the df into 2 separate dfs: searches and buys.  
-    The new buys are used to filter out user, category pairs from the Cassandra 
-    data df (don't advertise to users who made a purchase).  Once filtered, 
-    union the new searches, and return the resulting DF.
-
-    """
-    prev_df = grabFromCassandra(spark) # Data to be updated
-    
-    # Rename Columns of new DF
-    old_cols = new_df.schema.names
-    new_cols = ["time", "userid", "productid", "categoryid", "action"]
-    new_df = reduce(lambda df, i: df.withColumnRenamed(old_cols[i], new_cols[i]), xrange(len(old_cols)), new_df)
-    new_df.createOrReplaceTempView("new_table")
-
-
-    # Trim DataFrame to only relevant cols: user, category, product
-    # Get DF of only searches (filter out users who made a purchase)
-    searches_df = spark.sql("SELECT userid, categoryid, productid FROM new_table where action = 'search'")
-
-    # Get DF of only buys from new DF to filter out of what was in Cassandra
-    buys_df = spark.sql("SELECT userid, categoryid, productid FROM new_table where action = 'buy'")
-
-    buys_df.createOrReplaceTempView("buys_table")
-    prev_df.createOrReplaceTempView("prev_table")
-    
-    # Remove from previous if they purchased
-    prev_filtered_df = prev_df.join(buys_df, ['userid', 'categoryid'], 'left_anti')
-
-    # Get new DF of searches in format of: [userid, categoryid]: [list, of, searches] 
-    new_searches_df = searches_df.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
-
-    result_df = prev_filtered_df.union(new_searches_df)
-
-    return result_df
-
-
-def grabFromCassandra(spark):
-    """
-    Take a SparkSession and connect to local Cassandra DB (de-ny-drew2)
-
-        Returns: DF containing results from the previous spark-submit run
-    """
-
-    #return spark.read\
-    existing =  spark.read\
-            .format("org.apache.spark.sql.cassandra")\
-            .options(table="usersearches", keyspace="advertise")\
-            .load()
-    
-    existing.printSchema()
-    
-
-def writeToCassandra(df):
-    """
-    Write resulting dataframe to the Cassandra DB
+    Connect to the Cassandra cluster (local) and write
+    the dataframe results to the specified table
     """
     df.write\
-            .format("org.apache.spark.sql.cassandra")\
-            .mode('append')\
-            .options(table="usersearches", keyspace="advertise")\
-            .save()
+        .format("org.apache.spark.sql.cassandra")\
+        .mode('overwrite')\
+        .options(table=table, keyspace="advertise")\
+        .save()
+
+def main(batch_df):
+    """
+    Function uses the existing spark session and takes a dataframe;
+    parsed csv file(s) grabbed from a HDFS cluster (not local, from
+    first cluster)
+
+        First, it  renames columns for readability.  Then it creates a
+        temp view to run SQL on the table.  Uses Spark engine to:
+        1) Run SQL to filter (searches and buys)
+        2) Groupby,then aggregate search list and calculate buy count
+
+        Returns 2 key/value dataframes:
+            searches --> (userid, categoryid): set(list, of searches)
+            buys     --> productid: buy count
+    """
+    # Rename Columns of new DF
+    old_cols = batch_df.schema.names
+    new_cols = ["time", "userid", "productid", "categoryid", "action"]
+    batch_df = reduce(lambda df, i: df.withColumnRenamed(old_cols[i], new_cols[i]), xrange(len(old_cols)), batch_df)
+    batch_df.createOrReplaceTempView("new_table")
+
+    # For buys: select where buys were made, then groupby productid and count
+    # frequency --> indicator of product popularity
+    buy_query = """
+        SELECT userid, categoryid, productid
+        FROM new_table
+        WHERE action = 'buy'
+        """
+    buys_df = spark.sql(buy_query)
+    grouped_buys_df = buys_df.groupby(buys_df.productid).count()
+
+
+    # For searches: select all search log activity, do an antijoin with
+    # the buys_df to remove users who purchased, then group by tuple and
+    # aggregate searches:
+    # (userid, categoryid): [list, of, searches] 
+    search_query = """
+        SELECT userid, categoryid, productid
+        FROM new_table
+        WHERE action = 'search'
+        """
+    searches_df = spark.sql(search_query)
+    searches_df = searches_df.join(buys_df, ['userid', 'categoryid'], 'left_anti')
+    grouped_searches_df = searches_df.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
+
+    return grouped_searches_df, grouped_buys_df
 
 
 if __name__ == '__main__':
 
     # Use SparkSession builder to create a new session
-    spark = SparkSession.builder.appName("adirect").getOrCreate()
+    spark = SparkSession.builder.appName("batch_adirect").getOrCreate()
 
-    #new_df = grabFromHDFS('test_spark.csv')
-    new_df = grabFromHDFS('small_batch_file.csv')
-    result_df = processNewDF(spark, new_df)
-    #print result_df.count()
-    #result_df.printSchema()
+    # Specify filename for testing (default = *.csv)
+    filename = 'output.csv'
+    hdfs_df = grabFromHDFS(filename)
 
-    writeToCassandra(result_df)
+    searches_result_df, buys_result_df = main(hdfs_df)
 
-    spark.stop() # Stop spark session
+    writeToCassandra("usersearches", searches_result_df)
+    writeToCassandra("userbuys", buys_result_df)
+
+    spark.stop()
