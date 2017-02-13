@@ -54,11 +54,12 @@ class Producer(object):
                 # For each (user, category), pick a product and action (either 'search' or 'buy')
                 for tup in userTuples:
                     product_id = random.choice(categories[tup[1]])
-                    action = "buy" if random.randint(1,20) == 1 else "search" # 5% chance of buying
+		    ranNum = random.randint(1,20)
+                    action = "buy" if ranNum == 1 else "search" # 5% chance of buying
                     userMsg = msg_fmt.format(now, tup[0], product_id, tup[1], action)
                     #print userMsg # FIXME
-                    time.sleep(0.5)
-                    self.producer.send_messages('web_activity1', str(tup[0]), userMsg) # Where 'web_activity1' is the topic
+                    time.sleep(0.05)
+                    self.producer.send_messages('web_activity1', str(ranNum), userMsg) # Where 'web_activity1' is the topic
                     if action == "buy":
                         break
 
