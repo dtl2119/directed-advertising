@@ -4,8 +4,10 @@ from cluster_ips import cassandra
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-# TO RUN AS SPARK-SUBMIT JOB:
-# spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="Cassandra DB IPs" <pyspark_file>
+# Running as spark-submit
+# spark-submit 
+# --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3
+# --conf spark.cassandra.connection.host="Cassandra DB IPs" <pyspark_file>
 
 def grabFromHDFS(filename = "*.csv"):
     """
