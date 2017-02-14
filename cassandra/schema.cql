@@ -7,16 +7,12 @@ TABLE --> 'usersearches'
 
 CREATE KEYSPACE advertise WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 4};
 
-// May need to add insertion timestamp.  Also, the list might want to be a list of tuples rather than just
-// a list of product_ids.  Tuple in order to include timestamp of search
-// Tih has userid, categoryid, and searches in different colors
 // PRIMARY KEY (userid, categoryid)
 // WITH CLUSTERING ORDER BY (categoryid ASC)
 CREATE TABLE usersearches (userid text, categoryid text, searches set<text>, PRIMARY KEY (userid, categoryid));
 
 
 
-// This has userid and category id in red
 // PRIMARY KEY ((userid, categoryid)) WITH NO CLUSTERING ORDER
 CREATE TABLE usersearches (userid text, categoryid text, searches set<text>, PRIMARY KEY ((userid, categoryid)));
 
