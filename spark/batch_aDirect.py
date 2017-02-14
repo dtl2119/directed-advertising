@@ -1,6 +1,6 @@
 
-import sys
-sys.path.append('/ufs/guido/lib/python')
+import os, sys
+sys.path.append("%s/directed-advertising/gitignored" % (os.environ['HOME']))
 from cluster_ips import hdfs
 from cluster_ips import cassandra
 from pyspark.sql import SparkSession
