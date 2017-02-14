@@ -4,28 +4,49 @@ import random
 import sys
 import six #FIXME: needed?
 import time
+from users_dict import userDict
 from datetime import datetime
 from faker import Faker
 from kafka.client import SimpleClient
 from kafka.producer import KeyedProducer
 
 
-# FIXME: append larger "category id" to beginning
-tvs = [int(str(11)+ str(tv)) for tv in range(0, (5+1)*10, 10)[1:]] # tv ids: 5 tvs, multiple of 10, append 1 to front of number
-cables = [int(str(22)+ str(cable)) for cable in range(0, (10+1)*5, 5)[1:]] # cables ids: 10 cables, multiple of 5, append 2 to front of number
-cameras = [int(str(33)+ str(camera)) for camera in range(0, (15+1)*3, 3)[1:]] # cables ids: 15 cameras, multiple of 3, append 3 to front of number
-computers = [int(str(44)+ str(comp)) for comp in range(0, (20+1)*4, 4)[1:]] # cables ids: 20 computers, multiple of 4, append 4 to front of number
+# Product id lists
+tvs = [int(str(111)+ str(x)) for x in range(10000)]
+cables = [int(str(222)+ str(x)) for x in range(10000)]
+cameras = [int(str(333)+ str(x)) for x in range(10000)]
+phones = [int(str(444)+ str(x)) for x in range(10000)]
+computers = [int(str(555)+ str(x)) for x in range(10000)]
+memory = [int(str(666)+ str(x)) for x in range(10000)]
+monitors = [int(str(777)+ str(x)) for x in range(10000)]
+audio = [int(str(888)+ str(x)) for x in range(10000)]
+chargers = [int(str(999)+ str(x)) for x in range(10000)]
+misc = [int(str(100)+ str(x)) for x in range(10000)]
 
-categories = {1:tvs, 2: cables, 3:cameras, 4:computers}
+# cables ids: 20 computers, multiple of 4, append 4 to front of number
+computers = [int(str(444)+ str(comp)) for comp in range(0, (20+1)*4, 4)[1:]] 
+
+categories = {
+    1: tvs, 
+    2: cables, 
+    3: cameras, 
+    4: phones,
+    5: computers,
+    6: memory,
+    7: monitors,
+    8: audio,
+    9: chargers,
+    10: misc
+}
 
 
 # Total number of users
-numUsers = 50000 
-userSet = random.sample(range(1, numUsers+1), numUsers) # ensure userids are unique
+#numUsers = 50000 # FIXME
+#userSet = random.sample(range(1, numUsers+1), numUsers) # ensure userids are unique # FIXME
 
 
 # Format of messages to be sent: csv
-msg_fmt = "{},{},{},{},{}"
+msg_fmt = "{},{},{},{},{},{}"
 
 class Producer(object):
 
@@ -36,37 +57,35 @@ class Producer(object):
     def produce_msgs(self):
         while (True):
 
-            # Pick 3 random users (index)
-            random.shuffle(userSet)
-            # user_id1, user_id2, user_id3 = userSet[:3]
-            currUsers = userSet[:5]
+            # Pick 5 random user ids
+            currUsers = random.sample(userDict.keys(), 5)
            
             # Tuple for users, ensure searching in same category
-            # (user, category_id)
+            # (user, userid, categoryid)
             userTuples = []
-            for user in currUsers:
+            for userid in currUsers:
                 cat_id = random.choice(categories.keys())
-                userTuples.append((user, cat_id))
+                userTuples.append((userDict[userid], userid,  cat_id))
 
             for x in range(20): # Max 20 searches for each user (less if they purchase) 
 
                 # ISO 8601 format compatible with Cassandra
                 now = datetime.now().strftime('%Y-%m-%d %H:%M:%S') # For epoch --> time.time()
                 
-                # For each (user, category), pick a product and action (either 'search' or 'buy')
+                # For each (user, userid, category), pick a product and action (either 'search' or 'buy')
                 for tup in userTuples:
-                    product_id = random.choice(categories[tup[1]])
+                    product_id = random.choice(categories[tup[2]])
 		    ranNum = random.randint(1,20)
                     action = "buy" if ranNum == 1 else "search" # 5% chance of buying
-                    userMsg = msg_fmt.format(now, tup[0], product_id, tup[1], action)
+                    userMsg = msg_fmt.format(now, tup[0], tup[1], product_id, tup[2], action)
                     print userMsg # FIXME
-                    time.sleep(0.00000001)
+                    time.sleep(0.000000001)
                     #self.producer.send_messages('web_activity1', str(ranNum), userMsg) # Where 'web_activity1' is the topic
                     if action == "buy":
                         break
 
 
-                # Get 3 new users if a purchase made
+                # Get new users to search this server after a buy
                 if action == "buy":
                     break
 
@@ -74,7 +93,7 @@ class Producer(object):
 if __name__ == "__main__":
     args = sys.argv
     ip_addr = str(args[1])
-    #partition_key = str(args[2])
+    #partition_key = str(args[2]) # FIXME
     prod = Producer(ip_addr)
     prod.produce_msgs() 
 
