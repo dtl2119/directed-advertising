@@ -1,4 +1,6 @@
 
+import sys
+sys.path.append('/ufs/guido/lib/python')
 from cluster_ips import hdfs
 from cluster_ips import cassandra
 from pyspark.sql import SparkSession
@@ -20,7 +22,7 @@ def grabFromHDFS(filename = "*.csv"):
 
     """
     hdfs_master = hdfs['master1'] # Public IP of NamdeNode
-    hdfs_port = hdfs['port'] # hdfs port 9000
+    hdfs_port = hdfs['port'] # 9000
     full_hdfs_path = "hdfs://%s:%s/%s/%s" % (hdfs_master, hdfs_port, hdfs['base_dir'], filename)
     return spark.read.csv(full_hdfs_path)
 

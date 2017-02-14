@@ -27,3 +27,4 @@ CREATE TABLE userbuys (productid text, count int, PRIMARY KEY (productid));
 
 // New table for usersearches
 CREATE TABLE usersearches (userid text, categoryid text, time timestamp, productid text, PRIMARY KEY ((userid, categoryid), time)) WITH CLUSTERING ORDER BY (time DESC);
+CREATE TABLE usersearches (user text, userid int, categoryid int, time timestamp, productid int, PRIMARY KEY ((userid, categoryid), time)) WITH CLUSTERING ORDER BY (time DESC);
