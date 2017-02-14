@@ -20,7 +20,7 @@ categories = {1:tvs, 2: cables, 3:cameras, 4:computers}
 
 
 # Total number of users
-numUsers = 5000 
+numUsers = 50000 
 userSet = random.sample(range(1, numUsers+1), numUsers) # ensure userids are unique
 
 
@@ -39,7 +39,7 @@ class Producer(object):
             # Pick 3 random users (index)
             random.shuffle(userSet)
             # user_id1, user_id2, user_id3 = userSet[:3]
-            currUsers = userSet[:3]
+            currUsers = userSet[:5]
            
             # Tuple for users, ensure searching in same category
             # (user, category_id)
@@ -49,17 +49,19 @@ class Producer(object):
                 userTuples.append((user, cat_id))
 
             for x in range(20): # Max 20 searches for each user (less if they purchase) 
-                now = datetime.now().strftime('%d/%b/%Y %H:%M:%S') # For epoch --> time.time()
 
+                # ISO 8601 format compatible with Cassandra
+                now = datetime.now().strftime('%Y-%m-%d %H:%M:%S') # For epoch --> time.time()
+                
                 # For each (user, category), pick a product and action (either 'search' or 'buy')
                 for tup in userTuples:
                     product_id = random.choice(categories[tup[1]])
 		    ranNum = random.randint(1,20)
                     action = "buy" if ranNum == 1 else "search" # 5% chance of buying
                     userMsg = msg_fmt.format(now, tup[0], product_id, tup[1], action)
-                    #print userMsg # FIXME
-                    time.sleep(0.05)
-                    self.producer.send_messages('web_activity1', str(ranNum), userMsg) # Where 'web_activity1' is the topic
+                    print userMsg # FIXME
+                    time.sleep(0.00000001)
+                    #self.producer.send_messages('web_activity1', str(ranNum), userMsg) # Where 'web_activity1' is the topic
                     if action == "buy":
                         break
 
