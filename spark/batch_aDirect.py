@@ -53,7 +53,7 @@ def main(batch_df):
     """
     # Rename Columns of new DF
     old_cols = batch_df.schema.names
-    new_cols = ["time", "userid", "productid", "categoryid", "action"]
+    new_cols = ["time", "user", "userid", "productid", "categoryid", "action"]
     batch_df = reduce(lambda df, i: df.withColumnRenamed(old_cols[i], new_cols[i]), xrange(len(old_cols)), batch_df)
     batch_df.createOrReplaceTempView("new_table")
 
@@ -73,15 +73,17 @@ def main(batch_df):
     # aggregate searches:
     # (userid, categoryid): [list, of, searches] 
     search_query = """
-        SELECT userid, categoryid, productid
+        SELECT userid, categoryid, time, productid, user
         FROM new_table
         WHERE action = 'search'
         """
     searches_df = spark.sql(search_query)
     searches_df = searches_df.join(buys_df, ['userid', 'categoryid'], 'left_anti')
-    grouped_searches_df = searches_df.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
 
-    return grouped_searches_df, grouped_buys_df
+    # Uncomment to group by (userid, categoryid) and value = list of searches
+    #grouped_searches_df = searches_df.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
+
+    return searches_df, grouped_buys_df
 
 
 if __name__ == '__main__':

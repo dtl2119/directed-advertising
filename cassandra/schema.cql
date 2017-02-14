@@ -23,3 +23,7 @@ CREATE TABLE deletions (userid text, categoryid text, productid text, PRIMARY KE
 
 // Table for buy counts
 CREATE TABLE userbuys (productid text, count int, PRIMARY KEY (productid));
+
+
+// New table for usersearches
+CREATE TABLE usersearches (userid text, categoryid text, time timestamp, productid text, PRIMARY KEY ((userid, categoryid), time)) WITH CLUSTERING ORDER BY (time DESC);
