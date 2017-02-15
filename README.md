@@ -1,15 +1,31 @@
 # directed-advertising
 
 ##### Table of Contents  
+- [Tools and Frameworks](#frameworks-and-versions)
+
 - [Clusters](#clusters)  
+
 - [Data Pipeline](#data-pipeline)
+
 - [Spark](#spark)
 
+---
 
+###Tools and Frameworks
+Kafka: 0.10.1 (Scala 2.10)
+kafka-python: 1.3.2 (python 2.7)
+Hadoop 2.7.2
+
+Spark: 2.1.0
+Cassandra: 3.9
+Flask: 0.12
 
 ###Clusters
 The data pipeline consists of 2 clusters: `de-ny-drew` and `de-ny-drew2`
-Using m4.large AWS EC2 instances, each cluster had a master and 3 workers, for a total of 8 nodes.
+Using AWS EC2 instances, each cluster had a master and 3 workers, for a total of 8 nodes.
+
+The EC2 machines were instance-type m4.large
+Running Ubuntu 14.04.2 LTS (trusty)
 
 
 
@@ -22,6 +38,6 @@ Using m4.large AWS EC2 instances, each cluster had a master and 3 workers, for a
         - Cassandra DB
 
 
-##Spark 
+###Spark 
 To run pyspark file:
 spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="Cassandra DB IPs" <pyspark_file>
