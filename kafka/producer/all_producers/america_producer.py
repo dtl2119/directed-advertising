@@ -15,7 +15,8 @@ from kafka.producer import KeyedProducer
 # Total Products = itemsPerCat * 10 = 1,000,000
 itemsPerCat = 100000
 
-# Product id lists
+# Product id lists: prepend categoryid*3 (i.e. '1'*3 == '111) so we can 
+# easily determine which category a certain productid belongs to
 tvs = ['111' + str(x) for x in range(itemsPerCat)]
 cables = ['222' + str(x) for x in range(itemsPerCat)]
 cameras = ['333' + str(x) for x in range(itemsPerCat)]
@@ -26,8 +27,6 @@ monitors = ['777' + str(x) for x in range(itemsPerCat)]
 audio = ['888' + str(x) for x in range(itemsPerCat)]
 chargers = ['999'+ str(x) for x in range(itemsPerCat)]
 misc = ['100'+ str(x) for x in range(itemsPerCat)]
-
-# cables ids: 20 computers, multiple of 4, append 4 to front of number
 
 categories = {
     1: tvs, 
@@ -80,7 +79,7 @@ class Producer(object):
 		    ranNum = random.randint(1,100)
                     action = "buy" if ranNum == 1 else "search" # 1% chance of buying
                     userMsg = msg_fmt.format(now, tup[0], tup[1], product_id, tup[2], action)
-                    time.sleep(0.00001)
+                    time.sleep(0.01)
                     self.producer.send_messages('web_activity1', str(ranNum), userMsg) # 'web_activity1' is the topic
                     if action == "buy":
                         break
