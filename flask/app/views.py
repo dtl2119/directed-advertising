@@ -17,13 +17,13 @@ session = cluster.connect('advertise')
 
 
 
-@app.route('/')
-@app.route('/index')
-def index():
-    user = { 'nickname': 'Miguel' } # fake user
-    user = None
-    mylist= [1,2,3,4]
-    return render_template("index.html", title = 'Home', user = user, mylist = mylist)
+#@app.route('/')
+#@app.route('/index')
+#def index():
+#    user = { 'nickname': 'Miguel' } # fake user
+#    user = None
+#    mylist= [1,2,3,4]
+#    return render_template("index.html", title = 'Home', user = user, mylist = mylist)
 
 #@app.route('/api/<userid>/<categoryid>')
 #def get_searches(userid, categoryid):
@@ -59,21 +59,23 @@ def get_email(email, date):
 
 
 
-@app.route('/email')
+#@app.route('/email')
+@app.route('/')
+@app.route('/index')
 def email():
- return render_template("email.html")
+    return render_template("email.html")
 
 @app.route("/email", methods=['POST'])
 def email_post():
- emailid = request.form["emailid"]
- date = request.form["date"]
+    emailid = request.form["emailid"]
+    date = request.form["date"]
 
- #email entered is in emailid and date selected in dropdown is in date variable respectively
+    # Email entered is in emailid and date selected in dropdown is in date variable respectively
 
- stmt = "SELECT * FROM email WHERE id=%s and date=%s"
- response = session.execute(stmt, parameters=[emailid, date])
- response_list = []
- for val in response:
-    response_list.append(val)
- jsonresponse = [{"fname": x.fname, "lname": x.lname, "id": x.id, "message": x.message, "time": x.time} for x in response_list]
- return render_template("emailop.html", output=jsonresponse)
+    stmt = "SELECT * FROM email WHERE id=%s and date=%s"
+    response = session.execute(stmt, parameters=[emailid, date])
+    response_list = []
+    for val in response:
+        response_list.append(val)
+        jsonresponse = [{"fname": x.fname, "lname": x.lname, "id": x.id, "message": x.message, "time": x.time} for x in response_list]
+    return render_template("emailop.html", output=jsonresponse)
