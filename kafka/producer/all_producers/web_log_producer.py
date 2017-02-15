@@ -80,7 +80,9 @@ class Producer(object):
 		    ranNum = random.randint(1,100)
                     action = "buy" if ranNum == 1 else "search" # 1% chance of buying
                     userMsg = msg_fmt.format(now, tup[0], tup[1], product_id, tup[2], action)
-                    time.sleep(0.0000001)
+                    with open('output_check.csv', 'a') as out:
+                        out.write(userMsg+"\n")
+                    time.sleep(0.00001)
                     self.producer.send_messages('web_activity1', str(ranNum), userMsg) # 'web_activity1' is the topic
                     if action == "buy":
                         break
