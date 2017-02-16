@@ -1,4 +1,49 @@
+{% extends "mybase.html" %} <!--this means that you are extending the base tempate -->
+{% block index %}
+<div class="container">
+     <div class="starter-template">
+       <div class="row" style="height:100vh;">
+               <div class="col-md-10 col-md-offset-1">
+                   <!--
+                   <table class="table">
+                     <thead>
+                       <tr>
+                         <th>userid</th>
+                         <th>user</th>
+                         <th>categoryid</th>
+                         <th>time</th>
+                         <th>productid</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {% for val in output %}
+                       <tr>
+                         <td>{{val.userid}}</td>
+                         <td>{{val.user}}</td>
+                         <td>{{val.categoryid}}</td>
+                         <td>{{val.time}}</td>
+                         <td>{{val.productid}}</td>
+                       </tr>
+                       {% endfor %}
+                     </tbody>
+                   </table>
+                   -->
+                    <body>
 
+                        <!--<img src="../images/pipeline.png" alt="Mountain View" style="width:304px;height:228px;">-->
+                        <img src="http://www.simplesharebuttons.com/images/somacro/twitter.png" alt="pipeline">
+
+                    </body>
+
+               </div>
+       </div>
+     </div>
+   </div>
+{% endblock %}
+
+
+
+<!--
 <head>
    <title>{{title}} - microblog</title>
 </head>
@@ -14,4 +59,6 @@
         <li>{{num}}</li>
     {% endfor %}
 </body>
+
 </html>
+-->

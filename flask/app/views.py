@@ -17,13 +17,51 @@ session = cluster.connect('advertise')
 
 
 
-#@app.route('/')
-#@app.route('/index')
-#def index():
+@app.route('/')
+@app.route('/index')
+def index():
 #    user = { 'nickname': 'Miguel' } # fake user
 #    user = None
 #    mylist= [1,2,3,4]
-#    return render_template("index.html", title = 'Home', user = user, mylist = mylist)
+    return render_template("index.html")
+
+
+
+
+#@app.route('/table')
+#def table():
+#    return render_template("table.html")
+#
+#@app.route("/table", methods=['POST'])
+#def table_post():
+#    stmt = "select * from usersearches limit 20"
+#    #response = session.execute(stmt, parameters=[userid, categoryid])
+#    response = session.execute(stmt)
+#    response_list = []
+#    for r in response:
+#        response_list.append(r)
+#        jsonresponse = [{"userid": x.userid, "user": x.user, "categoryid": x.categoryid, "time": x.time, "productid": x.productid} for x in response_list]
+#    print jsonresponse
+#    #return jsonify(searches=jsonresponse)
+#    #return jsonify("tableop.html", output=jsonresponse)
+#    return jsonify("tableop.html")
+
+#@app.route("/table")
+@app.route("/searchestable")
+def table_post():
+    stmt = "select * from usersearches limit 20"
+    #response = session.execute(stmt, parameters=[userid, categoryid])
+    response = session.execute(stmt)
+    response_list = []
+    for r in response:
+        response_list.append(r)
+        jsonresponse = [{"userid": x.userid, "user": x.user, "categoryid": x.categoryid, "time": x.time, "productid": x.productid} for x in response_list]
+    #print jsonresponse
+    return render_template("table.html", output=jsonresponse)
+
+
+
+
 
 #@app.route('/api/<userid>/<categoryid>')
 #def get_searches(userid, categoryid):
@@ -42,14 +80,13 @@ session = cluster.connect('advertise')
 
 @app.route('/api/<email>/<date>')
 def get_email(email, date):
-       stmt = "SELECT * FROM email WHERE id=%s and date=%s"
-       response = session.execute(stmt, parameters=[email, date])
-       response_list = []
-       for val in response:
-            response_list.append(val)
-       jsonresponse = [{"first name": x.fname, "last name": x.lname, "id": x.id, "message": x.message, "time": x.time} for x in response_list]
-       return jsonify(emails=jsonresponse)
-
+    stmt = "SELECT * FROM usersearches WHERE id=%s and date=%s"
+    response = session.execute(stmt, parameters=[email, date])
+    response_list = []
+    for val in response:
+        response_list.append(val)
+    jsonresponse = [{"first name": x.fname, "last name": x.lname, "id": x.id, "message": x.message, "time": x.time} for x in response_list]
+    return jsonify(emails=jsonresponse)
 
 
 # Template just for the twitter bootstrap simple server
@@ -58,24 +95,23 @@ def get_email(email, date):
 #     return render_template("base.html")
 
 
+#@app.route('/')
+#@app.route('/index')
+@app.route('/querysearches')
+def search():
+    return render_template("searches.html")
 
-#@app.route('/email')
-@app.route('/')
-@app.route('/index')
-def email():
-    return render_template("email.html")
+@app.route("/querysearches", methods=['POST'])
+def searches_post():
+    form_userid = int(request.form["userid"])
+    form_categoryid = int(request.form["categoryid"])
 
-@app.route("/email", methods=['POST'])
-def email_post():
-    emailid = request.form["emailid"]
-    date = request.form["date"]
-
-    # Email entered is in emailid and date selected in dropdown is in date variable respectively
-
-    stmt = "SELECT * FROM email WHERE id=%s and date=%s"
-    response = session.execute(stmt, parameters=[emailid, date])
+    stmt = "SELECT * FROM usersearches WHERE userid = %s and categoryid = %s"
+    parameters = (form_userid, form_categoryid)
+    response = session.execute(stmt, parameters)
     response_list = []
     for val in response:
         response_list.append(val)
-        jsonresponse = [{"fname": x.fname, "lname": x.lname, "id": x.id, "message": x.message, "time": x.time} for x in response_list]
-    return render_template("emailop.html", output=jsonresponse)
+        jsonresponse = [{"userid": x.userid, "user": x.user, "categoryid": x.categoryid} for x in response_list]
+    print jsonresponse
+    return render_template("searchesop.html", output=jsonresponse)

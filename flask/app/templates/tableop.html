@@ -1,5 +1,5 @@
 {% extends "mybase.html" %}
-{% block emailop %}
+{% block tableop %}
 <div class="container">
      <div class="starter-template">
        <div class="row" style="height:100vh;">
@@ -10,8 +10,8 @@
                          <th>userid</th>
                          <th>user</th>
                          <th>categoryid</th>
-                         <!--<th>lname</th>-->
-                         <!--<th>message</th>-->
+                         <th>time</th>
+                         <th>productid</th>
                        </tr>
                      </thead>
                      <tbody>
@@ -20,6 +20,8 @@
                          <td>{{val.userid}}</td>
                          <td>{{val.user}}</td>
                          <td>{{val.categoryid}}</td>
+                         <td>{{val.time}}</td>
+                         <td>{{val.productid}}</td>
                        </tr>
                        {% endfor %}
                      </tbody>
