@@ -112,6 +112,6 @@ def searches_post():
     response_list = []
     for val in response:
         response_list.append(val)
-        jsonresponse = [{"userid": x.userid, "user": x.user, "categoryid": x.categoryid} for x in response_list]
+        jsonresponse = [{"userid": x.userid, "user": x.user, "categoryid": x.categoryid, "productid": x.productid} for x in response_list]
     print jsonresponse
     return render_template("searchesop.html", output=jsonresponse)

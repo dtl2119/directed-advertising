@@ -1115,6 +1115,9 @@ figure {
 img {
   vertical-align: middle;
 }
+img.pipeline{
+  vertical-align: left;
+}
 .img-responsive,
 .thumbnail > img,
 .thumbnail a > img,
