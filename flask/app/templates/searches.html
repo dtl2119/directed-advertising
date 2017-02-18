@@ -1,0 +1,34 @@
+{% extends "mybase.html" %} <!--this means that you are extending the base tempate -->
+<h1>Query Searches Table</h1>
+{% block searchid %} <!-- this is the name of the block below -->
+       <div class="row" style="height:100vh;">
+               <div class="col-md-4 col-md-offset-4" style="margin-top:10vh;">
+                       <form action="querysearches" method="POST">
+<!-- action is the html template that will return the result to this input query -->
+                               <div class="form-group text-center">
+                                       <label style="font-weight:300; font-size:36px;">Submit a userid</label>
+                                       <br /><br />
+                                       <input type="text" class="form-control" id="userid" name="userid" placeholder="userid">
+                                       <!--<input type="text" class="form-control" id="categoryid" name="categoryid" placeholder="1-50,000">-->
+                                       <select class="form-control" name="categoryid">
+                                               <option selected disabled=1>Choose a Product Category</option>
+                                               <option value=1>1 (TVs)</option>
+                                               <option value=2>2 (Cables)</option>
+                                               <option value=3>3 (Cameras)</option>
+                                               <option value=4>4 (Phones)</option>
+                                               <option value=5>5 (Computers)</option>
+                                               <option value=6>6 (Memory)</option>
+                                               <option value=7>7 (Monitors)</option>
+                                               <option value=8>8 (Audio)</option>
+                                               <option value=9>9 (Chargers)</option>
+                                               <option value=10>10 (Misc)</option>
+                                       </select>
+                                       <br /><br />
+
+                                       <button type="submit" value="Send" name="userid-container" class="btn btn-default id-submit">Get Products</button>
+                               </div>
+                       </form>
+               </div>
+       </div>
+
+{% endblock %}
