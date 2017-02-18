@@ -5,4 +5,4 @@
 script_dir="$(dirname "$0")"
 echo $script_dir
 
-ssh ubuntu@172.31.0.132 "bash /home/ubuntu/dirmv_processed_hdfs_files.sh"
+ssh ubuntu@172.31.0.132 "bash /home/ubuntu/directed-advertising/spark/mv_processed_hdfs_files.sh"
