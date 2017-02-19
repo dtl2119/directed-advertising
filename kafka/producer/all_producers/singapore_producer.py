@@ -2,14 +2,14 @@
 
 import os, sys
 sys.path.append("%s/directed-advertising/gitignored" % (os.environ['HOME']))
+from cluster_ips import first
 from cluster_ips import kafka
 import users
 
 import random
 import time
 from datetime import datetime
-from kafka.client import SimpleClient
-from kafka.producer import KeyedProducer
+from kafka import KafkaProducer
 
 
 # Total Products = itemsPerCat * 10 = 1,000,000
@@ -47,15 +47,12 @@ userDict = users.singapore
 
 # Format of messages to be sent: csv
 msg_fmt = "{},{},{},{},{},{}"
-
 class Producer(object):
 
-    def __init__(self, addr):
-        self.client = SimpleClient(addr)
-        self.producer = KeyedProducer(self.client)
-
-    def produce_msgs(self):
+    def produce_msgs(self, bootstrap_servers):
+        producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
         while (True):
+            time.sleep(0.01)
 
             # Pick 5 random user ids
             currUsers = random.sample(userDict.keys(), 5)
@@ -79,8 +76,7 @@ class Producer(object):
 		    ranNum = random.randint(1,100)
                     action = "buy" if ranNum == 1 else "search" # 1% chance of buying
                     userMsg = msg_fmt.format(now, tup[0], tup[1], product_id, tup[2], action)
-                    time.sleep(0.01)
-                    self.producer.send_messages('web_activity1', str(ranNum), userMsg) # 'web_activity1' is the topic
+                    producer.send('web_activity1', userMsg)
                     if action == "buy":
                         break
 
@@ -88,10 +84,11 @@ class Producer(object):
                 if action == "buy":
                     break
 
-
 if __name__ == "__main__":
-    args = sys.argv
-    ip_addr = kafka["master1"]
-    prod = Producer(ip_addr)
-    prod.produce_msgs() 
+    producer = Producer()
+    socket_format = "{}:{}"
+    bootstrap_servers = [socket_format.format(v, kafka['port']) for v in first.values()]
+    producer.produce_msgs(bootstrap_servers)
+        
+
 

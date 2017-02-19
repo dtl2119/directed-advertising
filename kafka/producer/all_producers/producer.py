@@ -2,9 +2,9 @@
 
 import os, sys
 sys.path.append("%s/directed-advertising/gitignored" % (os.environ['HOME']))
+from cluster_ips import first
 from cluster_ips import kafka
-#import users
-from users import userDict
+import users
 
 import random
 import time
@@ -52,7 +52,7 @@ class Producer(object):
     def produce_msgs(self, bootstrap_servers):
         producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
         while (True):
-            time.sleep(0.0001)
+            time.sleep(0.01)
 
             # Pick 5 random user ids
             currUsers = random.sample(userDict.keys(), 5)
@@ -86,7 +86,9 @@ class Producer(object):
 
 if __name__ == "__main__":
     producer = Producer()
-    producer.produce_msgs(['localhost:9092'])
+    socket_format = "{}:{}"
+    bootstrap_servers = [socket_format.format(v, kafka['port']) for v in first.values()]
+    producer.produce_msgs(bootstrap_servers)
         
 
 

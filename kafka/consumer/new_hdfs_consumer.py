@@ -9,9 +9,8 @@ class Consumer(object):
     """
     Kafka Consumer class: consumes messages from a topic, and pushes to HDFS
 
-    Messages blocked into 120MB files and put into HDFS.  Two directories:
-    /user/web_logs: where web activity log files are stored
-    /user/cached: files stored temporarily, overwritten on new batch job # FIXME
+    Messages blocked into 20MB files and put into HDFS in the directory:
+    /user/web_logs
 
     Attributes:
         client: IP:port pair of kafka broker
@@ -19,7 +18,7 @@ class Consumer(object):
         temp_file_path: Local on-disk path for temp_file, where  messages are accumulated
             transfer to HDFS
         temp_file: Actual temporary file where messages are  written locally 
-            on disk until it reaches 120MB, at which point it's flushed to
+            on disk until it reaches 20MB, at which point it's flushed to
             hdfs and then overwritten
         topic: Topic name the Consumer is subscribing to
         group: Kafka consumer group to be associated with
@@ -41,7 +40,7 @@ class Consumer(object):
         """
         Consumes stream of messages from specified topic (in main)
 
-        output_dir: Path where 120MB temp_file is, write to file before 
+        output_dir: Path where 20MB temp_file is, write to file before 
            flushing to HDFS
         """
         timestamp = time.strftime('%Y%m%d%H%M%S')
@@ -55,7 +54,7 @@ class Consumer(object):
             msg_count += 1
             self.temp_file.write(msg.value + "\n")
             if msg_count % 1000 == 0:
-                if self.temp_file.tell() > 10000000: # FIXME: to 120MB
+                if self.temp_file.tell() > 20000000:
                     self.flush_to_hdfs(output_dir)
 
 
@@ -64,7 +63,7 @@ class Consumer(object):
         self.temp_file.close()
         timestamp = time.strftime('%Y%m%d%H%M%S')
         hdfs_full_path = "%s/%s_%s.csv" % (self.hdfs_path, self.topic, timestamp)
-        print "Block %s: Flushing temp 120MB file to hdfs (/user/web_logs)" % self.block_num
+        print "Block %s: Flushing temp 20MB file to hdfs (/user/web_logs)" % self.block_num
         self.block_num += 1
 
         hdfs_put_cmd = "hdfs dfs -copyFromLocal %s %s " % (self.temp_file_path, hdfs_full_path)
