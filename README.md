@@ -39,5 +39,10 @@ Running Ubuntu 14.04.2 LTS (trusty)
 
 
 ###Spark 
-To run pyspark file:
-spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="Cassandra DB IPs" <pyspark_file>
+To run the spark programs, cd into the `spark` directory. There are two files: `batch_aDirect.py` and `stream_aDirect.py`.
+
+batch:
+`spark-submit --packages com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 --conf spark.cassandra.connection.host="Cassandra DB IPs" batch_aDirect.py`
+
+streaming:
+`spark-submit --master <master_network_socket> --packages org.apache.spark:spark-streaming-kafka-0-8-assembly_2.11:2.1.0,com.datastax.spark:spark-cassandra-connector_2.11:2.0.0-M3 stream_aDirect.py`
