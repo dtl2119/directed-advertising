@@ -6,7 +6,7 @@ from cluster_ips import cassandra
 
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, Row
 from pyspark.streaming.kafka import KafkaUtils
 
 
@@ -20,18 +20,30 @@ def getSparkSessionInstance(sparkConf):
     return globals()["sparkSessionSingletonInstance"]
 
 
+def writeToCassandra(table, df):
+    """
+    Connect to the Cassandra cluster (local) and write
+    the dataframe results to the specified table
+    """
+    df.write\
+        .format("org.apache.spark.sql.cassandra")\
+        .mode('append')\
+        .options(table=table, keyspace="advertise")\
+        .save()
+
+
 def process(rdd):
     try:
         # Get the singleton instance of SparkSession
         spark = getSparkSessionInstance(rdd.context.getConf())
-
-        #df = spark.read.json(rdd)
-        stream_df = spark.read.csv(rdd)
-
-        old_cols = stream_df.schema.names
-        new_cols = ["time", "user", "userid", "productid", "categoryid", "action"]
-        stream_df = reduce(lambda df, i: df.withColumnRenamed(old_cols[i], new_cols[i]), xrange(len(old_cols)), stream_df)
+      
+        splitRDD = rdd.map(lambda l: l.split(","))
+        namedRDD = splitRDD.map(lambda c: Row(time=c[0], user=c[1], userid=c[2], productid=c[3], categoryid=c[4], action=c[5]))
+        stream_df = spark.createDataFrame(namedRDD)
+        
+        # Creates a temporary view using the DataFrame
         stream_df.createOrReplaceTempView("stream_table")
+
 
         # For buys: select where buys were made, then groupby productid and count
         # frequency --> indicator of product popularity
@@ -43,7 +55,6 @@ def process(rdd):
         buys_df = spark.sql(buy_query)
         grouped_buys_df = buys_df.groupby(buys_df.productid).count()
 
-        # Creates a temporary view using the DataFrame
 
         search_query = """
             SELECT userid, categoryid, time, productid, user
@@ -54,34 +65,23 @@ def process(rdd):
         searches_df = spark.sql(search_query)
         searches_df = searches_df.join(buys_df, ['userid', 'categoryid'], 'left_anti')
 
-        
         searches_df.show()
-        searches_df.w
-        
+
         writeToCassandra("usersearches", searches_df)
         
     except:
         pass
 
 
-def writeToCassandra(table, df):
-    """
-    Connect to the Cassandra cluster (local) and write
-    the dataframe results to the specified table
-    """
-    df.write\
-        .format("org.apache.spark.sql.cassandra")\
-        .mode('append')\
-        .options(table=table, keyspace="advertise", cluster = "de-ny-drew2")\
-        .save()
         
-
 if __name__ == "__main__":
 
     topics = ["web_activity1"]
-    #socket_format = "{}:{}"
-    #bootstrap_servers = [socket_format.format(v, kafka['port']) for v in first.values()]
-    bootstrap_servers = "%s:%s" % (kafka['master1'], kafka['port'])
+    socket_format = "{}:{}"
+
+    # Kafka Brokers, first is a dict of first cluster's IPs
+    kafka_server_list = [socket_format.format(v, kafka['port']) for v in first.values()]
+    bootstrap_servers = ", ".join(kafka_server_list)
    
     # Create StreamingContext object from SparkContext object
     sc = SparkContext(appName="stream_adirect")
@@ -91,17 +91,13 @@ if __name__ == "__main__":
     kafkaStream = KafkaUtils.createDirectStream(ssc,
                                                 topics, 
                                                 {"bootstrap.servers": bootstrap_servers})
-    
-    raw_logs = kafkaStream.map(lambda x: x[0])
-#    with open("raw_logs_variable.txt", 'w') as debugFile:
-#        debugFile.write(raw_logs.pprint(5)+"\n")
-    
-    raw_logs.foreachRDD(process)
-    
-    # Start actual process
-    ssc.start()
 
-    # Wait for process to finish
+    # Returns DStream object (2nd element is the csv line)
+    logs = kafkaStream.map(lambda x: x[1])
+    
+    logs.foreachRDD(process)
+    
+    ssc.start()
     ssc.awaitTermination()
 
 
