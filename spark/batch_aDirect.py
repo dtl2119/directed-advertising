@@ -34,7 +34,7 @@ def writeToCassandra(table, df):
     """
     df.write\
         .format("org.apache.spark.sql.cassandra")\
-        .mode('overwrite')\
+        .mode('append')\
         .options(table=table, keyspace="advertise")\
         .save()
 
