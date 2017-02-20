@@ -2,10 +2,11 @@
 
 from pyspark import SparkContext, SparkConf
 from cassandra.cluster import Cluster
+import pyspark_cassandra
 
 # Connect to Cassandra cluster and create session
 cluster = Cluster()
-cluster = Cluster([<seed>]) # Only need 1 ip
+cluster = Cluster(<seed>) # Only need 1 ip
 session = cluster.connect('advertise') # Connect to cluster, create session w/ keyspace = 'advertise'
 
 # To submit this python application on Spark cluster for execution:
@@ -15,6 +16,9 @@ session = cluster.connect('advertise') # Connect to cluster, create session w/ k
 # created in spark-submit: must instantiate own SparkContext to use
 conf = SparkConf().setAppName("adTarget")
 sc = SparkContext(conf=conf)
+
+# For files in hdfs
+#file = sc.textFile("hdfs://<fqdn>:9000/user/test.txt")
 
 # For files on disk (file must be on all nodes in the cluster)
 webLogRdd = sc.textFile("file:///home/ubuntu/directed-advertising/small_batch_file.txt/")
@@ -36,4 +40,8 @@ resultRdd = groupedRdd.filter(lambda x: x[0] not in buyKeys).map(lambda x: [x[0]
 # Dictionary result
 result = dict(resultRdd.collect())
 
+for k,v in result.iteritems():
+    print "%s: %s" % (k,v)
 
+
+sc.stop()
