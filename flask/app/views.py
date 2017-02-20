@@ -49,7 +49,7 @@ def index():
 #@app.route("/table")
 @app.route("/searchestable")
 def table_post():
-    stmt = "select * from usersearches limit 20"
+    stmt = "select * from usersearches limit 50"
     #response = session.execute(stmt, parameters=[userid, categoryid])
     response = session.execute(stmt)
     response_list = []
@@ -106,12 +106,12 @@ def searches_post():
     form_userid = int(request.form["userid"])
     form_categoryid = int(request.form["categoryid"])
 
-    stmt = "SELECT * FROM usersearches WHERE userid = %s and categoryid = %s"
+    stmt = "SELECT * FROM usersearches WHERE userid = %s and categoryid = %s LIMIT 3;"
     parameters = (form_userid, form_categoryid)
     response = session.execute(stmt, parameters)
     response_list = []
     for val in response:
         response_list.append(val)
-        jsonresponse = [{"userid": x.userid, "user": x.user, "categoryid": x.categoryid, "productid": x.productid} for x in response_list]
+        jsonresponse = [{"userid": x.userid, "user": x.user, "categoryid": x.categoryid, "time":x.time, "productid": x.productid} for x in response_list]
     print jsonresponse
     return render_template("searchesop.html", output=jsonresponse)

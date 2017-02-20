@@ -1,6 +1,6 @@
 {% extends "mybase.html" %}
 {% block searchesop %}
-<h1 style="color:red">PRODUCTS TO ADVERTISE</h1>
+<h1 style="color:red">Products to Advertise</h1>
 <div class="container">
      <div class="starter-template">
        <div class="row" style="height:100vh;">
@@ -11,6 +11,7 @@
                          <th class="text-center">USERID</th>
                          <th class="text-center">USER</th>
                          <th class="text-center">CATEGORYID</th>
+                         <th class="text-center" style="color:blue">TIME</th>
                          <th class="text-center" style="color:red">PRODUCTID</th>
                        </tr>
                      </thead>
@@ -20,6 +21,7 @@
                          <td>{{val.userid}}</td>
                          <td>{{val.user}}</td>
                          <td>{{val.categoryid}}</td>
+                         <td style="color:blue">{{val.time}}</td>
                          <td style="color:red">{{val.productid}}</td>
                        </tr>
                        {% endfor %}
