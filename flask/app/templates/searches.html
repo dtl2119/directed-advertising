@@ -1,12 +1,12 @@
 {% extends "mybase.html" %} <!--this means that you are extending the base tempate -->
-<h1>Query Searches Table</h1>
 {% block searchid %} <!-- this is the name of the block below -->
+<h1 style="color:red">QUERY SEARCHES TABLE</h1>
        <div class="row" style="height:100vh;">
                <div class="col-md-4 col-md-offset-4" style="margin-top:10vh;">
                        <form action="querysearches" method="POST">
 <!-- action is the html template that will return the result to this input query -->
                                <div class="form-group text-center">
-                                       <label style="font-weight:300; font-size:36px;">Submit a userid</label>
+                                       <label style="font-weight:200; font-size:20px;">(submit a userid and category)</label>
                                        <br /><br />
                                        <input type="text" class="form-control" id="userid" name="userid" placeholder="userid">
                                        <!--<input type="text" class="form-control" id="categoryid" name="categoryid" placeholder="1-50,000">-->

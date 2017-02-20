@@ -1,5 +1,6 @@
 {% extends "mybase.html" %}
 {% block searchesop %}
+<h1 style="color:red">PRODUCTS TO ADVERTISE</h1>
 <div class="container">
      <div class="starter-template">
        <div class="row" style="height:100vh;">
@@ -7,10 +8,10 @@
                    <table class="table">
                      <thead>
                        <tr>
-                         <th>userid</th>
-                         <th>user</th>
-                         <th>categoryid</th>
-                         <th>productid</th>
+                         <th class="text-center">USERID</th>
+                         <th class="text-center">USER</th>
+                         <th class="text-center">CATEGORYID</th>
+                         <th class="text-center" style="color:red">PRODUCTID</th>
                        </tr>
                      </thead>
                      <tbody>
@@ -19,7 +20,7 @@
                          <td>{{val.userid}}</td>
                          <td>{{val.user}}</td>
                          <td>{{val.categoryid}}</td>
-                         <td>{{val.productid}}</td>
+                         <td style="color:red">{{val.productid}}</td>
                        </tr>
                        {% endfor %}
                      </tbody>
