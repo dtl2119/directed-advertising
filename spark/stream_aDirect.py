@@ -63,11 +63,12 @@ def process(rdd):
             """
 
         searches_df = spark.sql(search_query)
-        searches_df = searches_df.join(buys_df, ['userid', 'categoryid'], 'left_anti')
+        searches_df = searches_df.join(buys_df, ['userid', 'categoryid'], 'leftanti')
 
         searches_df.show()
 
         writeToCassandra("usersearches", searches_df)
+        writeToCassandra("searches", searches_df)
         
     except:
         pass

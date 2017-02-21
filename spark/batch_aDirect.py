@@ -4,7 +4,6 @@ sys.path.append("%s/directed-advertising/gitignored" % (os.environ['HOME']))
 from cluster_ips import hdfs
 from cluster_ips import cassandra
 from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
 
 # Running as spark-submit
 # spark-submit 
@@ -67,25 +66,21 @@ def main(batch_df):
         WHERE action = 'buy'
         """
     buys_df = spark.sql(buy_query)
-    grouped_buys_df = buys_df.groupby(buys_df.productid).count()
+    buy_count_df = buys_df.groupby(buys_df.categoryid, buys_df.productid).count()
 
 
-    # For searches: select all search log activity, do an antijoin with
-    # the buys_df to remove users who purchased, then group by tuple and
-    # aggregate searches:
-    # (userid, categoryid): [list, of, searches] 
+    # For searches: select all logs that were searches, do an 
+    # antijoin with the buys_df on `userid` and `categoryid` 
+    # to remove users who bought in that category
     search_query = """
         SELECT userid, categoryid, time, productid, user
         FROM new_table
         WHERE action = 'search'
         """
     searches_df = spark.sql(search_query)
-    searches_df = searches_df.join(buys_df, ['userid', 'categoryid'], 'left_anti')
+    searches_df = searches_df.join(buys_df, ['userid', 'categoryid'], 'leftanti')
 
-    # Uncomment to group by (userid, categoryid) and value = list of searches
-    #grouped_searches_df = searches_df.groupby('userid', 'categoryid').agg(F.collect_list('productid').alias('searches'))
-
-    return searches_df, grouped_buys_df
+    return searches_df, buy_count_df
 
 
 if __name__ == '__main__':
@@ -93,13 +88,16 @@ if __name__ == '__main__':
     # Use SparkSession builder to create a new session
     spark = SparkSession.builder.appName("batch_adirect").getOrCreate()
 
-    # Specify filename for testing (default = *.csv)
-    filename = 'output.csv'
+    # If filename not specified, defaults to *.csv
+    filename = "batch_output.csv"
     hdfs_df = grabFromHDFS(filename)
 
     searches_result_df, buys_result_df = main(hdfs_df)
 
+    writeToCassandra("productcount", buys_result_df) 
     writeToCassandra("usersearches", searches_result_df)
-    writeToCassandra("userbuys", buys_result_df)
+    writeToCassandra("searches", searches_result_df)
 
     spark.stop()
+
+
