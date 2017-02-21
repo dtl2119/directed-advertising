@@ -34,9 +34,12 @@ storage), all running Ubuntu 14.04.2 LTS (trusty).
 
 ###Data Pipeline
 
-
-![alt tag](https://raw.githubusercontent.com/username/directed-advertising/blob/master/flask/app/static/images/pipeline.png)
-
+1)
+![alt tag](https://github.com/dtl2119/directed-advertising/raw/master/flask/app/static/images/pipeline.png)
+2)
+![alt tag](https://raw.githubusercontent.com/dtl2119/directed-advertising/blob/master/flask/app/static/images/pipeline.png)
+3)
+![alt tag](flask/app/static/images/pipeline.png)
 
 
 ###Tools and Frameworks
