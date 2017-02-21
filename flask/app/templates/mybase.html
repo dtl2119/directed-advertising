@@ -49,9 +49,12 @@
           <ul class="nav navbar-nav">
             <li><a href="/">Home</a></li>
             <li><a href="/searchestable">User Searches Table</a></li>
-            <li><a href="/querysearches">Query Searches</a></li>
+            <li><a href="/querysearches">Query User/Category</a></li>
+            <li><a href="/queryuser">Query User</a></li>
+            <li><a href="/queryproduct">Popular Products</a></li>
+            <!--            <li><a href="/queryuser">Query User</a></li>-->
 <!--            <li class="active"><a href="#">Popular Products</a></li>-->
-            <li><a href="https://www.slideshare.net/secret/3bvwUSmZJPvZRo">Slideshare</a></li>
+            <li><a href="https://www.slideshare.net/DrewLimm/drew-limm-adirectfinal-72417313">Slideshare</a></li>
 <!--            <li><a href="#contact">Contact</a></li>-->
           </ul>
         </div><!--/.nav-collapse -->
@@ -83,6 +86,28 @@
 
     {% block searchid %}{% endblock %}
     {% block searchesop %}{% endblock %}
+    </div>
+
+    </div><!-- /.container -->
+    
+    <div class="container">
+
+
+    <div class="starter-template">
+
+    {% block userid %}{% endblock %}
+    {% block userop %}{% endblock %}
+    </div>
+
+    </div><!-- /.container -->
+
+    <div class="container">
+
+
+    <div class="starter-template">
+
+    {% block productid %}{% endblock %}
+    {% block productop %}{% endblock %}
     </div>
 
     </div><!-- /.container -->
