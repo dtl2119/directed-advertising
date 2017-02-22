@@ -4,7 +4,8 @@ import os, sys
 sys.path.append("%s/directed-advertising/gitignored" % (os.environ['HOME']))
 from cluster_ips import first
 from cluster_ips import kafka
-import users
+#from users import <country> # uncomment for users from particular country
+from users import userDict
 
 import random
 import time
@@ -43,7 +44,7 @@ categories = {
 
 # users.<country> is a dictionary from users.py (gitignored)
 # k:v =  userid: username (i.e. 49723: "craig198")
-userDict = users.america
+#userDict = users.america
 
 # Format of messages to be sent: csv
 msg_fmt = "{},{},{},{},{},{}"
@@ -52,7 +53,7 @@ class Producer(object):
     def produce_msgs(self, bootstrap_servers):
         producer = KafkaProducer(bootstrap_servers=bootstrap_servers)
         while (True):
-            time.sleep(0.01)
+            time.sleep(0.001)
 
             # Pick 5 random user ids
             currUsers = random.sample(userDict.keys(), 5)
@@ -77,6 +78,7 @@ class Producer(object):
                     action = "buy" if ranNum == 1 else "search" # 1% chance of buying
                     userMsg = msg_fmt.format(now, tup[0], tup[1], product_id, tup[2], action)
                     producer.send('web_activity1', userMsg)
+                    #print userMSG
                     if action == "buy":
                         break
 
