@@ -7,7 +7,7 @@
 
 - [Data Pipeline](#data-pipeline)
 
-- [Tools and Frameworks](#tools-and-frameworks))
+- [Tools and Frameworks](#tools-and-frameworks)
 
 - [Execution](#execution)
 
