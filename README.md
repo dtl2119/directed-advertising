@@ -13,7 +13,7 @@
 
 ---
 
-##Goal
+## Goal
 The goal of this project was to create a data pipeline for an e-commerce company
 to target advertisements to their customers based on their search and purchase
 history.  With 1,000,000 different products in 10 product categories, and 50,000
